@@ -1,7 +1,7 @@
-FROM rastasheep/ubuntu-sshd:18.04
+FROM debian:stable-slim
 
 # Buildroot version to use
-ARG BUILD_ROOT_RELEASE=2021.02-rc2
+ARG BUILD_ROOT_RELEASE=2024.02.1
 # Root password for SSH
 ARG ROOT_PASSWORD=browser-vm
 
@@ -11,36 +11,52 @@ ARG ROOT_PASSWORD=browser-vm
 # docker run ... -v $PWD/buildroot-v86:/buildroot-v86 ...
 COPY ./buildroot-v86 /buildroot-v86
 
-# Setup SSH (for Windows users) and prepare apt-get
-RUN echo 'root:${ROOT_PASSWORD}' | chpasswd; \
-    # Install all Buildroot deps
-    sed -i 's|deb http://us.archive.ubuntu.com/ubuntu/|deb mirror://mirrors.ubuntu.com/mirrors.txt|g' /etc/apt/sources.list; \
-    dpkg --add-architecture i386; \
-    rm -rf /var/lib/apt/lists/*; \
-    apt-get -q update;
-
-# Install all Buildroot deps and prepare buildroot
 WORKDIR /root
-RUN DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
-    bc \
-    build-essential \
-    bzr \
-    cpio \
-    cvs \
-    git \
-    unzip \
+
+# OS dependencies & packages
+
+RUN \
+    apt-get -q update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -q -y install \
+    which \
+    ccache \
     wget \
-    libc6:i386 \
+    sed \
+    make \
+    binutils \
+    build-essential \
+    diffutils \
+    gcc \
+    g++ \
+    bash \
+    patch \
+    gzip \
+    bzip2 \
+    perl \
+    tar \
+    cpio \
+    unzip \
+    rsync \
+    file \
+    bc \
+    findutils \
     libncurses5-dev \
+    git \
+    python3 \
     libssl-dev \
-    rsync; \
-    wget -c http://buildroot.org/downloads/buildroot-${BUILD_ROOT_RELEASE}.tar.gz; \
-    tar axf buildroot-${BUILD_ROOT_RELEASE}.tar.gz;
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Buildroot
+
+RUN \
+    wget -c http://buildroot.org/downloads/buildroot-${BUILD_ROOT_RELEASE}.tar.gz \
+    && tar axf buildroot-${BUILD_ROOT_RELEASE}.tar.gz
 
 # configure the locales
 ENV LANG='C' \
     LANGUAGE='en_US:en' \
-    LC_ALL='C' \ 
+    LC_ALL='C' \
     NOTVISIBLE="in users profile" \
     TERM=xterm
 
