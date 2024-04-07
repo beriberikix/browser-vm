@@ -44,6 +44,7 @@ RUN \
     git \
     python3 \
     libssl-dev \
+    libc6-i386 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
